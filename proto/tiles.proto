@@ -1,0 +1,26 @@
+syntax = "proto3";
+package proto;
+
+option go_package =  "github.com/Onlymiind/tileset_generator/proto";
+
+message Tiles {
+    repeated bytes tiles = 1;
+}
+
+message Metatile {
+    uint32 top_left = 1;
+    uint32 top_right = 2;
+    uint32 bottom_left = 3;
+    uint32 bottom_right = 4;
+}
+
+message AirTile {
+    uint32 id = 1;
+    bytes data = 2;
+}
+
+message Tileset {
+    Tiles tile_data = 1;
+    AirTile air_tile = 2;
+    repeated Metatile metatiles = 3;
+}
