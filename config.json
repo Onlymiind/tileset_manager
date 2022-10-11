@@ -1,0 +1,60 @@
+{
+    "auto": "assets",
+    "output_directory": "out_json",
+    "output_type": 1,
+    "manual":[
+        {
+            "tile_data": "assets/tilesets/lavaCavesA.chr",
+            "metatile_data": "assets/tilesets/lavaCavesFull.mtile",
+            "name": "lavaCavesFull_A"
+        },
+        {
+            "tile_data": "assets/tilesets/lavaCavesB.chr",
+            "metatile_data": "assets/tilesets/lavaCavesFull.mtile",
+            "name": "lavaCavesFull_B"
+        },
+        {
+            "tile_data": "assets/tilesets/lavaCavesC.chr",
+            "metatile_data": "assets/tilesets/lavaCavesFull.mtile",
+            "name": "lavaCavesFull_C"
+        },
+        {
+            "tile_data": "assets/tilesets/lavaCavesA.chr",
+            "metatile_data": "assets/tilesets/lavaCavesMid.mtile",
+            "name": "lavaCavesMid_A"
+        },
+        {
+            "tile_data": "assets/tilesets/lavaCavesB.chr",
+            "metatile_data": "assets/tilesets/lavaCavesMid.mtile",
+            "name": "lavaCavesMid_B"
+        },
+        {
+            "tile_data": "assets/tilesets/lavaCavesC.chr",
+            "metatile_data": "assets/tilesets/lavaCavesMid.mtile",
+            "name": "lavaCavesMid_C"
+        },
+        {
+            "tile_data": "assets/tilesets/lavaCavesA.chr",
+            "metatile_data": "assets/tilesets/lavaCavesEmpty.mtile",
+            "name": "lavaCavesEmpty_A"
+        },
+        {
+            "tile_data": "assets/tilesets/lavaCavesB.chr",
+            "metatile_data": "assets/tilesets/lavaCavesEmpty.mtile",
+            "name": "lavaCavesEmpty_B"
+        },
+        {
+            "tile_data": "assets/tilesets/lavaCavesC.chr",
+            "metatile_data": "assets/tilesets/lavaCavesEmpty.mtile",
+            "name": "lavaCavesEmpty_C"
+        },
+        {
+            "tile_data": "assets/tilesets/surfaceBG.chr",
+            "metatile_data": "assets/tilesets/surface.mtile"
+        },
+        {
+            "tile_data": "assets/tilesets/queenBG.chr",
+            "metatile_data": "assets/tilesets/queen.mtile"
+        }
+    ]
+}

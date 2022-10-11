@@ -2,38 +2,54 @@ package file_manager
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"io/fs"
 	"os"
-	"path"
 	"strings"
 
 	protobuf "github.com/golang/protobuf/proto"
 
-	"github.com/Onlymiind/tileset_generator/internal/constants"
+	"github.com/Onlymiind/tileset_generator/internal/common"
 	"github.com/Onlymiind/tileset_generator/internal/extractor"
-	"github.com/Onlymiind/tileset_generator/internal/image_writer"
 	"github.com/Onlymiind/tileset_generator/proto"
 	"github.com/golang/protobuf/jsonpb"
 )
 
 func IsTileData(info fs.FileInfo) bool {
-	return strings.HasSuffix(info.Name(), constants.ExtensionTileData) && info.Mode().IsRegular()
+	return strings.HasSuffix(info.Name(), common.ExtensionTileData) && info.Mode().IsRegular()
 }
 
 func IsMetatileData(info fs.FileInfo) bool {
-	return strings.HasSuffix(info.Name(), constants.ExtensionMetatileData) && info.Mode().IsRegular()
+	return strings.HasSuffix(info.Name(), common.ExtensionMetatileData) && info.Mode().IsRegular()
 }
 
-func writePB(srcFilePath string, msg protobuf.Message) error {
-	pbPath := path.Join(constants.DefaultOutDir, strings.ReplaceAll(srcFilePath, constants.ExtensionTileData, ".json"))
+func getOutputFileName(srcPath string, newExtension string) string {
+	if strings.Contains(srcPath, common.ExtensionTileData) {
+		return strings.ReplaceAll(srcPath, common.ExtensionTileData, newExtension)
+	} else if strings.Contains(srcPath, common.ExtensionMetatileData) {
+		return strings.ReplaceAll(srcPath, common.ExtensionMetatileData, "_tileset"+newExtension)
+	}
+
+	return srcPath
+}
+
+func getOutputFilePath(outPath string, rootPath string, srcPath string, newExtension string) string {
+	dest := strings.Replace(srcPath, rootPath, outPath, 1)
+	return getOutputFileName(dest, newExtension)
+}
+
+func WritePB(pbPath string, msg protobuf.Message) error {
 	filePB, err := os.OpenFile(pbPath, os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
 		return err
 	}
-	marshaller := jsonpb.Marshaler{}
+	marshaller := jsonpb.Marshaler{
+		EmitDefaults: true,
+		Indent:       "    ",
+	}
 	err = marshaller.Marshal(filePB, msg)
 	if err != nil {
 		return err
@@ -41,8 +57,7 @@ func writePB(srcFilePath string, msg protobuf.Message) error {
 	return filePB.Close()
 }
 
-func writePNG(srcFilePath string, img *image.Paletted) error {
-	imgPath := path.Join(constants.DefaultOutDir, strings.ReplaceAll(srcFilePath, constants.ExtensionTileData, ".png"))
+func WritePNG(imgPath string, img *image.Paletted) error {
 
 	imgFile, err := os.OpenFile(imgPath, os.O_WRONLY|os.O_CREATE, 0777)
 	if err != nil {
@@ -55,17 +70,22 @@ func writePNG(srcFilePath string, img *image.Paletted) error {
 	return imgFile.Close()
 }
 
-func readFile(path string, info fs.FileInfo) ([]byte, error) {
+func ReadFile(path string) ([]byte, error) {
 	file, err := os.OpenFile(path, os.O_RDONLY, 0644)
 	if err != nil {
 		return nil, err
+	}
+
+	info, err := file.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("error getting file info: %s", err.Error())
 	}
 
 	data := make([]byte, info.Size())
 	read, err := file.Read(data)
 	file.Close()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading file: %s", err.Error())
 	} else if read != int(info.Size()) {
 		return nil, errors.New("could not read all data")
 	}
@@ -73,25 +93,26 @@ func readFile(path string, info fs.FileInfo) ([]byte, error) {
 	return data, nil
 }
 
-func ExtractTileData(filePath string, info fs.FileInfo, palette [4]color.Color, outputPNG bool) (*proto.Tiles, error) {
-	if !IsTileData(info) {
-		return nil, nil
-	}
+func ExtractTileData(filePath string, palette [4]color.Color) (*proto.Tiles, error) {
 
-	data, err := readFile(filePath, info)
+	data, err := ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
 
 	pb := extractor.ExtractTileData(data)
 
-	if outputPNG {
-		img := image_writer.WriteTileData(pb, constants.DefaultPalette)
-		err = writePNG(filePath, img)
-		if err != nil {
-			return nil, err
-		}
+	return pb, nil
+}
+
+func ExtractMetatileData(filePath string, tileData *proto.Tiles, palette [4]color.Color) (*proto.Tileset, error) {
+
+	data, err := ReadFile(filePath)
+	if err != nil {
+		return nil, err
 	}
 
-	return pb, writePB(filePath, pb)
+	pb := extractor.ExtractMetatileData(data, tileData, common.AirTileID, common.AirTileData[:])
+
+	return pb, nil
 }

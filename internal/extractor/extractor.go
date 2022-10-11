@@ -1,7 +1,7 @@
 package extractor
 
 import (
-	"github.com/Onlymiind/tileset_generator/internal/constants"
+	"github.com/Onlymiind/tileset_generator/internal/common"
 	"github.com/Onlymiind/tileset_generator/proto"
 )
 
@@ -24,7 +24,7 @@ func getColorIndexes(lsb byte, msb byte) []byte {
 }
 
 func writeTileToProto(msg *proto.Tiles, tile []byte) {
-	if len(tile) != constants.BitsPerTile {
+	if len(tile) != common.BitsPerTile {
 		return
 	}
 
@@ -34,12 +34,12 @@ func writeTileToProto(msg *proto.Tiles, tile []byte) {
 }
 
 func getTile(src []byte) []byte {
-	if len(src) != constants.BytesPerTile {
+	if len(src) != common.BytesPerTile {
 		return nil
 	}
 
-	result := make([]byte, 0, constants.BitsPerTile)
-	for y := 0; y < constants.TileSizePx; y++ {
+	result := make([]byte, 0, common.BitsPerTile)
+	for y := 0; y < common.TileSizePx; y++ {
 		result = append(result, getColorIndexes(src[y*2], src[y*2+1])...)
 	}
 
@@ -47,49 +47,36 @@ func getTile(src []byte) []byte {
 }
 
 func ExtractTileData(src []byte) *proto.Tiles {
-	tileCount := len(src) / constants.BytesPerTile
+	tileCount := len(src) / common.BytesPerTile
 
 	encoded := &proto.Tiles{
-		Tiles: make([][]byte, 0, len(src)/constants.BytesPerTile),
+		Tiles: make([][]byte, 0, len(src)/common.BytesPerTile),
 	}
 
 	for tile := 0; tile < tileCount; tile++ {
-		offset := tile * constants.BytesPerTile
-		tileData := getTile(src[offset : offset+constants.BytesPerTile])
+		offset := tile * common.BytesPerTile
+		tileData := getTile(src[offset : offset+common.BytesPerTile])
 		writeTileToProto(encoded, tileData)
 	}
 
 	return encoded
 }
 
-func extractMetatile(tileset *proto.Tileset, metatile []byte) {
-	if len(metatile) != 4 {
-		return
-	}
-
-	result := &proto.Metatile{
-		TopLeft:     uint32(metatile[0]),
-		TopRight:    uint32(metatile[1]),
-		BottomLeft:  uint32(metatile[2]),
-		BottomRight: uint32(metatile[3]),
-	}
-
-	tileset.Metatiles = append(tileset.Metatiles, result)
-}
-
-func ExtractMetatileData(src []byte, tileData *proto.Tiles, airBlockID uint8, airBlockData []byte) *proto.Tileset {
+func ExtractMetatileData(src []byte, tileData *proto.Tiles, airBlockID byte, airBlockData []byte) *proto.Tileset {
 	if len(src) < 4 || len(src)%4 != 0 {
 		return nil
 	}
 
 	result := &proto.Tileset{
-		TileData: tileData,
-		AirTile: &proto.AirTile{
-			Id:   uint32(airBlockID),
-			Data: airBlockData,
-		},
+		TileData:  make(map[uint32][]byte, len(tileData.Tiles)+1),
 		Metatiles: make([]*proto.Metatile, 0, len(src)/4),
 	}
+
+	for i := range tileData.Tiles {
+		result.TileData[uint32(i)] = tileData.Tiles[i]
+	}
+
+	result.TileData[uint32(airBlockID)] = airBlockData
 
 	for i := 0; i < len(src); i += 4 {
 		result.Metatiles = append(result.Metatiles, &proto.Metatile{

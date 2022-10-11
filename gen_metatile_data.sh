@@ -6,7 +6,7 @@ for i in $1/*_metatiles.asm; do
     name="${i}_standalone"
     cp "${i}.temp" "${name}.asm"
     rgbasm "./${name}.asm" -o "${name}.o"
-    rgblink "${name}.o" -o "${i/_metatiles.asm/".mtile"}"
+    rgblink "${name}.o" -x -o "${i/_metatiles.asm/".mtile"}"
     rm "${i}.temp"
     rm "${name}.asm"
     rm "${name}.o"

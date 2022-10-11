@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/cmd",
-            "args": ["${input:arg}"],
+            "args": ["${workspaceFolder}/config.json"],
             "cwd": "${workspaceFolder}"
         }
     ],
