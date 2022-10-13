@@ -2,4 +2,5 @@ assets
 extracted
 bin
 out
+temp
 *.pb.go
