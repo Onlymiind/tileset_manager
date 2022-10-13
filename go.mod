@@ -1,4 +1,4 @@
-module github.com/Onlymiind/tileset_generator
+module github.com/Onlymiind/tileset_manager
 
 go 1.19
 

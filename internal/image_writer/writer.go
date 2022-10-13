@@ -4,8 +4,8 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/Onlymiind/tileset_generator/internal/common"
-	"github.com/Onlymiind/tileset_generator/proto"
+	"github.com/Onlymiind/tileset_manager/internal/common"
+	"github.com/Onlymiind/tileset_manager/proto"
 )
 
 type outPalette []color.Color

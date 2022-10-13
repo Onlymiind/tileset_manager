@@ -15,10 +15,10 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	protobuf "google.golang.org/protobuf/proto"
 
-	"github.com/Onlymiind/tileset_generator/internal/common"
-	"github.com/Onlymiind/tileset_generator/internal/file_manager"
-	"github.com/Onlymiind/tileset_generator/internal/image_writer"
-	"github.com/Onlymiind/tileset_generator/proto"
+	"github.com/Onlymiind/tileset_manager/internal/common"
+	"github.com/Onlymiind/tileset_manager/internal/file_manager"
+	"github.com/Onlymiind/tileset_manager/internal/image_writer"
+	"github.com/Onlymiind/tileset_manager/proto"
 )
 
 func main() {

@@ -10,6 +10,6 @@ proto:
 _compiler:
 
 _generator:
-	go build -o bin/tileset_generator cmd/generator/main.go
+	go build -o bin/tileset_manager cmd/generator/main.go
 
 .PHONY: proto

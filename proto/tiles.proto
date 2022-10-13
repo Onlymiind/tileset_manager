@@ -1,7 +1,7 @@
 syntax = "proto3";
 package proto;
 
-option go_package =  "github.com/Onlymiind/tileset_generator/proto";
+option go_package =  "github.com/Onlymiind/tileset_manager/proto";
 
 message Tiles {
     repeated bytes tiles = 1;

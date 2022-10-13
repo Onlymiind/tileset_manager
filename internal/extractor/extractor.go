@@ -1,8 +1,8 @@
 package extractor
 
 import (
-	"github.com/Onlymiind/tileset_generator/internal/common"
-	"github.com/Onlymiind/tileset_generator/proto"
+	"github.com/Onlymiind/tileset_manager/internal/common"
+	"github.com/Onlymiind/tileset_manager/proto"
 )
 
 // Convert two bytes of source data to an array of color indexes

@@ -11,9 +11,9 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	protobuf "google.golang.org/protobuf/proto"
 
-	"github.com/Onlymiind/tileset_generator/internal/common"
-	"github.com/Onlymiind/tileset_generator/internal/extractor"
-	"github.com/Onlymiind/tileset_generator/proto"
+	"github.com/Onlymiind/tileset_manager/internal/common"
+	"github.com/Onlymiind/tileset_manager/internal/extractor"
+	"github.com/Onlymiind/tileset_manager/proto"
 )
 
 func IsTileData(info fs.FileInfo) bool {
