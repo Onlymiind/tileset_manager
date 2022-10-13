@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"image"
-	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -14,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/golang/protobuf/jsonpb"
+	"google.golang.org/protobuf/encoding/protojson"
 	protobuf "google.golang.org/protobuf/proto"
 
 	"github.com/Onlymiind/tileset_generator/internal/common"
@@ -216,15 +214,12 @@ func processConvertToPNG(cfg *Config) {
 		}
 
 		var tileset *proto.Tileset
-		reader := bytes.NewReader(data)
-
 		tileData := &proto.Tiles{}
-		err = jsonpb.Unmarshal(reader, tileData)
+		err = protojson.Unmarshal(data, tileData)
 		if err != nil {
 			tileData = nil
-			reader.Seek(0, io.SeekStart)
 			tileset = &proto.Tileset{}
-			err = jsonpb.Unmarshal(reader, tileset)
+			err = protojson.Unmarshal(data, tileset)
 			if err != nil {
 				fmt.Printf("could not unmarshal json: %s\n", err.Error())
 				continue
