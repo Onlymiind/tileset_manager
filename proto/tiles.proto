@@ -16,5 +16,5 @@ message Metatile {
 
 message Tileset {
     map<uint32, bytes> tile_data = 1;
-    repeated Metatile metatiles = 3;
+    repeated Metatile metatiles = 2;
 }
