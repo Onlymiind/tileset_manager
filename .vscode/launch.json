@@ -5,11 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Package",
+            "name": "generator",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd",
+            "program": "${workspaceFolder}/cmd/generator",
+            "args": ["${workspaceFolder}/config.json"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "compiler",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/compiler",
             "args": ["${workspaceFolder}/config.json"],
             "cwd": "${workspaceFolder}"
         }
