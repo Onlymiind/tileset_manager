@@ -18,7 +18,10 @@ jobs:
       with:
         go-version: 1.19
     - name: Set up Protobuf
-      run: sudo apt install protobuf-compiler
+      run: |
+        sudo apt install protobuf-compiler
+        go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+        export PATH=$PATH:$GOPATH/bin
 
     - name: generate_proto
       run: make proto
