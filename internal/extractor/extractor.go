@@ -62,7 +62,7 @@ func ExtractTileData(src []byte) *proto.Tiles {
 	return encoded
 }
 
-func ExtractMetatileData(src []byte, tileData *proto.Tiles, airBlockID byte, airBlockData []byte) *proto.Tileset {
+func ExtractMetatileData(src []byte, tileData *proto.Tiles, emptyTileID byte, emptyTileData []byte) *proto.Tileset {
 	if len(src) < 4 || len(src)%4 != 0 {
 		return nil
 	}
@@ -76,7 +76,9 @@ func ExtractMetatileData(src []byte, tileData *proto.Tiles, airBlockID byte, air
 		result.TileData[uint32(i)] = tileData.Tiles[i]
 	}
 
-	result.TileData[uint32(airBlockID)] = airBlockData
+	if len(emptyTileData) == common.BitsPerTile {
+		result.TileData[uint32(emptyTileID)] = emptyTileData
+	}
 
 	for i := 0; i < len(src); i += 4 {
 		result.Metatiles = append(result.Metatiles, &proto.Metatile{

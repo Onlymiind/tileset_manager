@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/jsonpb"
-	protobuf "github.com/golang/protobuf/proto"
+	protobuf "google.golang.org/protobuf/proto"
 
 	"github.com/Onlymiind/tileset_generator/internal/common"
 	"github.com/Onlymiind/tileset_generator/internal/file_manager"
@@ -48,7 +48,7 @@ func main() {
 	}
 
 	fileWalkerWrapper := func(filePath string, info fs.FileInfo, err error) error {
-		return fileWalker(cfg.OutputDirectory, cfg.Auto, "", cfg.IgnoreMetatiles, cfg.OutputType, filePath, info, err)
+		return fileWalker(cfg, filePath, info, err)
 	}
 
 	if len(cfg.Auto) != 0 {
@@ -61,6 +61,13 @@ func main() {
 	processManual(cfg)
 
 	processConvertToPNG(cfg)
+
+	// f, _ := os.OpenFile("out/png/queen.png", os.O_RDONLY, 0666)
+	// img, _ := png.Decode(f)
+
+	// _ = img
+
+	// fmt.Println()
 
 }
 
@@ -78,6 +85,12 @@ type Config struct {
 	OutputDirectory string     `json:"output_directory,omitempty"`
 	OutputType      OutputType `json:"output_type,omitempty"`
 	ConvertToPng    []string   `json:"convert_to_png,omitempty"`
+	EmptyTile       EmptyTile  `json:"empty_tile"`
+}
+
+type EmptyTile struct {
+	ID   uint8  `json:"id,omitempty"`
+	Data []byte `json:"data,omitempty"`
 }
 
 type Manual struct {
@@ -116,9 +129,9 @@ func getConfig(path string) (*Config, error) {
 	return cfg, nil
 }
 
-func process(destFile, tileDataPath, metatileDataPath string, outputType OutputType) error {
-	pngOut := destFile + ".png"
-	jsonOut := destFile + common.ExtensionJSON
+func process(dstFile, tileDataPath, metatileDataPath string, emptyTileID uint8, emptyTileData []byte, outputType OutputType) error {
+	pngOut := dstFile + ".png"
+	jsonOut := dstFile + common.ExtensionJSON
 
 	tileData, err := file_manager.ExtractTileData(tileDataPath, common.DefaultPalette)
 	if err != nil {
@@ -132,7 +145,7 @@ func process(destFile, tileDataPath, metatileDataPath string, outputType OutputT
 	var pbOut protobuf.Message = tileData
 
 	if len(metatileDataPath) != 0 {
-		tileset, err := file_manager.ExtractMetatileData(metatileDataPath, tileData, common.DefaultPalette)
+		tileset, err := file_manager.ExtractMetatileData(metatileDataPath, tileData, emptyTileID, emptyTileData, common.DefaultPalette)
 		if err != nil {
 			return err
 		}
@@ -185,9 +198,9 @@ func processManual(cfg *Config) {
 			name = cfg.Manual[i].Name
 		}
 
-		dest := path.Join(cfg.OutputDirectory, name)
+		dst := path.Join(cfg.OutputDirectory, name)
 
-		err = process(dest, cfg.Manual[i].TileData, metatilePath, cfg.OutputType)
+		err = process(dst, cfg.Manual[i].TileData, metatilePath, cfg.EmptyTile.ID, cfg.EmptyTile.Data, cfg.OutputType)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
@@ -244,39 +257,39 @@ func processConvertToPNG(cfg *Config) {
 }
 
 func getOutFilePath(outPath, rootPath, srcPath, oldName, newName, extensionToStrip string) string {
-	dest := strings.Replace(srcPath, rootPath, outPath, 1)
+	dst := strings.Replace(srcPath, rootPath, outPath, 1)
 	if len(newName) != 0 {
-		dest = common.ReplaceLast(dest, oldName, newName)
+		dst = common.ReplaceLast(dst, oldName, newName)
 	} else {
-		dest = strings.TrimSuffix(dest, extensionToStrip)
+		dst = strings.TrimSuffix(dst, extensionToStrip)
 	}
 
-	return dest
+	return dst
 }
 
-func fileWalker(outPath, rootPath, newName string, ingoreMetatiles bool, outputType OutputType, filePath string, info fs.FileInfo, err error) error {
+func fileWalker(cfg *Config, filePath string, info fs.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
 
-	if filePath == rootPath {
+	if filePath == cfg.Auto {
 		return nil
 	}
 
 	if info.IsDir() {
-		return os.MkdirAll(strings.Replace(filePath, rootPath, outPath, 1), 0777)
+		return os.MkdirAll(strings.Replace(filePath, cfg.Auto, cfg.OutputDirectory, 1), 0777)
 	}
 
 	if file_manager.IsTileData(info) {
 
-		dest := getOutFilePath(outPath, rootPath, filePath, info.Name(), newName, common.ExtensionTileData)
+		dst := getOutFilePath(cfg.OutputDirectory, cfg.Auto, filePath, info.Name(), "", common.ExtensionTileData)
 
 		metatilePath := common.ReplaceLast(filePath, common.ExtensionTileData, common.ExtensionMetatileData)
-		if info, err := os.Stat(metatilePath); ingoreMetatiles || !(err == nil && file_manager.IsMetatileData(info)) {
+		if info, err := os.Stat(metatilePath); cfg.IgnoreMetatiles || !(err == nil && file_manager.IsMetatileData(info)) {
 			metatilePath = ""
 		}
 
-		return process(dest, filePath, metatilePath, outputType)
+		return process(dst, filePath, metatilePath, cfg.EmptyTile.ID, cfg.EmptyTile.Data, cfg.OutputType)
 	}
 
 	return nil

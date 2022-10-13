@@ -8,12 +8,12 @@ import (
 	"os"
 	"strings"
 
-	protobuf "github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/encoding/protojson"
+	protobuf "google.golang.org/protobuf/proto"
 
 	"github.com/Onlymiind/tileset_generator/internal/common"
 	"github.com/Onlymiind/tileset_generator/internal/extractor"
 	"github.com/Onlymiind/tileset_generator/proto"
-	"github.com/golang/protobuf/jsonpb"
 )
 
 func IsTileData(info fs.FileInfo) bool {
@@ -25,19 +25,16 @@ func IsMetatileData(info fs.FileInfo) bool {
 }
 
 func WritePB(pbPath string, msg protobuf.Message) error {
-	filePB, err := os.OpenFile(pbPath, os.O_WRONLY|os.O_CREATE, 0777)
+	marshaller := protojson.MarshalOptions{
+		EmitUnpopulated: true,
+		Multiline:       true,
+		Indent:          "    ",
+	}
+	out, err := marshaller.Marshal(msg)
 	if err != nil {
 		return err
 	}
-	marshaller := jsonpb.Marshaler{
-		EmitDefaults: true,
-		Indent:       "    ",
-	}
-	err = marshaller.Marshal(filePB, msg)
-	if err != nil {
-		return err
-	}
-	return filePB.Close()
+	return os.WriteFile(pbPath, out, 0666)
 }
 
 func WritePNG(imgPath string, img *image.Paletted) error {
@@ -65,14 +62,14 @@ func ExtractTileData(filePath string, palette [4]color.Color) (*proto.Tiles, err
 	return pb, nil
 }
 
-func ExtractMetatileData(filePath string, tileData *proto.Tiles, palette [4]color.Color) (*proto.Tileset, error) {
+func ExtractMetatileData(filePath string, tileData *proto.Tiles, emptyTileID uint8, emptyTileData []byte, palette [4]color.Color) (*proto.Tileset, error) {
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
 
-	pb := extractor.ExtractMetatileData(data, tileData, common.AirTileID, common.AirTileData[:])
+	pb := extractor.ExtractMetatileData(data, tileData, emptyTileID, emptyTileData)
 
 	return pb, nil
 }

@@ -3,6 +3,10 @@
     "output_directory": "out/png",
     "ignore_metatiles": false,
     "output_type": 2,
+    "empty_tile": {
+        "id": 255,
+        "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+    },
     "manual":[
         {
             "tile_data": "assets/tilesets/lavaCavesA.chr",
