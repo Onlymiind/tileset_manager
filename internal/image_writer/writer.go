@@ -18,6 +18,9 @@ func MakePalette(palette [4]color.Color) outPalette {
 }
 
 func (p outPalette) getColorIndex(rawIndex uint8) uint8 {
+	if len(p) == 4 {
+		return rawIndex
+	}
 	return rawIndex + 1
 }
 
@@ -44,13 +47,11 @@ func WriteTileData(tileData *proto.Tiles, palette [4]color.Color) *image.Palette
 		height++
 	}
 
-	actualPalette := MakePalette(palette)
-
 	img := image.NewPaletted(image.Rect(0, 0, width*common.TileSizePx, height*common.TileSizePx),
-		[]color.Color(actualPalette))
+		[]color.Color(palette[:]))
 	x, y := 0, 0
 	for _, tile := range tileData.Tiles {
-		writeTileToImage(img, actualPalette, tile, x, y)
+		writeTileToImage(img, palette[:], tile, x, y)
 		x += common.TileSizePx
 		if x >= width*common.TileSizePx {
 			x %= width * common.TileSizePx
@@ -72,7 +73,23 @@ func WriteMetatileData(tileset *proto.Tileset, palette [4]color.Color) *image.Pa
 		height++
 	}
 
-	actualPalette := MakePalette(palette)
+	actualPalette := make(outPalette, 4)
+	copy(actualPalette, palette[:])
+	needTransparent := false
+	for _, mtile := range tileset.Metatiles {
+		_, ok1 := tileset.TileData[mtile.TopLeft]
+		_, ok2 := tileset.TileData[mtile.TopRight]
+		_, ok3 := tileset.TileData[mtile.BottomLeft]
+		_, ok4 := tileset.TileData[mtile.BottomRight]
+		needTransparent = !(ok1 && ok2 && ok3 && ok4)
+		if needTransparent {
+			break
+		}
+	}
+
+	if needTransparent {
+		actualPalette = MakePalette(palette)
+	}
 
 	img := image.NewPaletted(image.Rect(0, 0, width*common.MetatileSizePx, height*common.MetatileSizePx),
 		[]color.Color(actualPalette))

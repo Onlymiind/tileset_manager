@@ -41,5 +41,16 @@ GRAPHICS:
             m2edit's author writes that room $4500 is always a filler room (see https://m2sw.zophar.net/m2edit/readme.txt).
             Need to check that;
             Also they write that scroll value for room $4500 is always $0F (no scroll). Check that;
+        Implement tile data referencing in tileset .json files:
+            1. Add a preprocessing stage for tileset jsons (can't directly convert to proto);
+            2. Add an option to serialize tilesets with referencing;
+               2.1. This will require to actually serialize tile data to json, when decoding metatiles;
+            3. This will enable conversion from png to game boy graphics;
+        Implement conversion back to game boy format:
+            1. Simple for tile data;
+            2. For metatiles:
+               2.1. Available only if metatile json file is present and uses ONLY references for tile data;
+               2.2. Write data from png back to the corresponding tile using info from metatile json;
+               2.3. Palette issue;
     /TODO
 /GRAPHICS
