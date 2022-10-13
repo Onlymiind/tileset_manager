@@ -23,5 +23,8 @@ jobs:
         go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
         export PATH=$PATH:$GOPATH/bin
 
-    - name: generate_proto
-      run: make proto
+    - name: Autogen
+      run: |
+        make proto
+        git add -f proto/*pb.go
+        git commit --amend --no-edit
