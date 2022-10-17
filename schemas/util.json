@@ -1,0 +1,37 @@
+{
+    "$schema": "http://json-schema.org/schema",
+    "definitions": {
+        "explicit_uint8":{
+            "description": "Byte represented as hexadecimal unsigned integer",
+            "type":"string",
+            "pattern": "^[0-9a-f]{1,2}$"
+        },
+        "uint8_range":{
+            "description": "Range of uint8, inclusive",
+            "type": "string",
+            "pattern": "^[0-9a-f]{1,2}:[0-9a-f]{1,2}$"
+        },
+        "uint8": {
+            "description": "uint8 or range of uint8",
+            "oneOf": [
+                {"$ref": "#/definitions/explicit_uint8"},
+                {"$ref": "#/definitions/uint8_range"}
+            ]
+        },
+        "png": {
+            "contentMediaType": "image/png",
+            "contentEncoding": "base64"
+        },
+        "tile_ref": {
+            "description": "Reference to tiles in the specific file\nSyntax: $ref:<path-to-file>[:(tile indexes to use) - optional]\nIndexes must be hexadecimal and can be supplied in one of the following forms:\n [index] - single index to use. If used for a range of tiles, scecified tile is repeated\n[index]-[index] - range of tiles\n[index]: - start of the range of tiles",
+            "type": "string",
+            "pattern": "^[^:]+(.tile.json|.png|.tile|.chr)(:[0-9a-f]{1,2}(:([0-9a-f]{1,2})?)?)?$"
+        },
+        "colorName": {
+            "enum": ["black", "white", "light", "dark"]
+        },
+        "colorBin": {
+            "enum": ["00", "11", "01", "10"]
+        }
+    }
+}

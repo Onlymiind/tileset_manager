@@ -1,0 +1,70 @@
+{
+    "$schema": "http://json-schema.org/schema",
+    "description": "",
+    "type": "object",
+    "properties": {
+        "palette":{
+            "description": "Palette to use when converting to png image\nColors can be specified either by name or by their index in binary form",
+            "type":"array",
+            "oneOf": [
+                {
+                    "items": {
+                        "$ref": "util.json#/definitions/colorName"
+                    }
+                },
+                {
+                    "items": {
+                        "$ref": "util.json#/definitions/colorBin"
+                    }
+                }
+            ],
+            "minItems": 4,
+            "maxItems": 4
+        },
+        "tiles": {
+            "description": "Tiles to use",
+            "type":"object",
+            "additionalProperties": {
+                "description": "A single tile index or index range",
+                "$ref": "util.json#/definitions/tile_ref"
+            },
+            "propertyNames": {
+                "$ref": "util.json#/definitions/uint8"
+            },
+            "maxProperties": 255
+        },
+        "metatiles": {
+            "description": "Metatiles data\nEach metatile consists of four tile indexes",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "tl": {
+                        "description": "Top left",
+                        "$ref" : "util.json#/definitions/explicit_uint8"
+                    },
+                    "tr": {
+                        "description": "Top right",
+                        "$ref" : "util.json#/definitions/explicit_uint8"
+                    },
+                    "bl": {
+                        "description": "Bottom left",
+                        "$ref" : "util.json#/definitions/explicit_uint8"
+                    },
+                    "br": {
+                        "description": "Bottom right",
+                        "$ref" : "util.json#/definitions/explicit_uint8"
+                    }
+                },
+                "required": ["tl", "tr", "bl", "br"]
+            }
+        },
+        "absent_tiles": {
+            "type": "array",
+            "items": {
+                "$ref": "util.json#/definitions/uint8"
+            }
+        }
+    },
+    "required": ["metatiles"]
+}

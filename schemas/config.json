@@ -1,0 +1,65 @@
+{
+    "$schema": "http://json-schema.org/schema",
+    "type": "object",
+    "properties": {
+        "auto": {
+            "type": "string"
+        },
+        "output": {
+            "type": "object",
+            "properties": {
+                "directory": {
+                    "type": "string",
+                    "default": "extracted"
+                },
+                "type": {
+                    "enum": ["png_only", "json_only", "png_and_json"],
+                    "default": "png_and_json"
+                },
+                "img_directory": {
+                    "type": "string"
+                },
+                "json_direcory": {
+                    "type": "string"
+                },
+                "tile_directory": {
+                    "type": "string"
+                }
+            }
+        },
+        "empty_tile": {
+            "maxProperties": 1,
+            "minProperties": 1,
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "util.json#/definitions/tile_ref"
+            },
+            "propertyNames": {
+                "$ref": "util.json#/definitions/explicit_uint8"
+            }
+        },
+        "manual": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "tile_data": {
+                        "type": "string"
+                    },
+                    "metatile_data": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "convert_to_png": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}

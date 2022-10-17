@@ -2,12 +2,24 @@
 	"folders": [
 		{
 			"path": ".."
-		},
-		{
-			"path": "../.git"
 		}
 	],
-	"settings": {},
+	"settings": {
+		"json.schemas": [
+			{
+				"fileMatch": [
+					"*.mtile.json"
+				],
+				"url": "./schemas/metatiles.json"
+			},
+			{
+				"fileMatch": [
+					"*.cfg.json"
+				],
+				"url": "./schemas/config.json"
+			}
+		]
+	},
 	"launch": {
 		"version": "0.2.0",
 		"configurations": [

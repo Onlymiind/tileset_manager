@@ -100,13 +100,13 @@ type Manual struct {
 func getConfig(path string) (*Config, error) {
 	cfgData, err := os.ReadFile(os.Args[1])
 	if err != nil {
-		return nil, fmt.Errorf("could not read config file: %s", err.Error())
+		return nil, common.Wrap(err, "could not read config file")
 	}
 
 	cfg := &Config{}
 	err = json.Unmarshal(cfgData, &cfg)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse config file: %s", err.Error())
+		return nil, common.Wrap(err, "could not parse config file")
 	}
 
 	if len(cfg.OutputDirectory) == 0 {
@@ -131,7 +131,7 @@ func process(dstFile, tileDataPath, metatileDataPath string, emptyTileID uint8, 
 	pngOut := dstFile + ".png"
 	jsonOut := dstFile + common.ExtensionJSON
 
-	tileData, err := file_manager.ExtractTileData(tileDataPath, common.DefaultPalette)
+	tileData, err := file_manager.ExtractTileData(tileDataPath)
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func process(dstFile, tileDataPath, metatileDataPath string, emptyTileID uint8, 
 	var pbOut protobuf.Message = tileData
 
 	if len(metatileDataPath) != 0 {
-		tileset, err := file_manager.ExtractMetatileData(metatileDataPath, tileData, emptyTileID, emptyTileData, common.DefaultPalette)
+		tileset, err := file_manager.ExtractMetatileData(metatileDataPath, tileData, emptyTileID, emptyTileData)
 		if err != nil {
 			return err
 		}
