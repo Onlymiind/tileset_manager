@@ -23,16 +23,6 @@ func getColorIndexes(lsb byte, msb byte) []byte {
 	return result
 }
 
-func writeTileToProto(msg *proto.Tiles, tile []byte) {
-	if len(tile) != common.BitsPerTile {
-		return
-	}
-
-	tileCopy := make([]byte, len(tile))
-	copy(tileCopy, tile)
-	msg.Tiles = append(msg.Tiles, tileCopy)
-}
-
 func getTile(src []byte) []byte {
 	if len(src) != common.BytesPerTile {
 		return nil
@@ -46,34 +36,34 @@ func getTile(src []byte) []byte {
 	return result
 }
 
-func ExtractTileData(src []byte) *proto.Tiles {
+func ExtractTileData(src []byte) [][]byte {
 	tileCount := len(src) / common.BytesPerTile
 
-	encoded := &proto.Tiles{
-		Tiles: make([][]byte, 0, len(src)/common.BytesPerTile),
-	}
+	result := make([][]byte, 0, len(src)/common.BytesPerTile)
 
 	for tile := 0; tile < tileCount; tile++ {
 		offset := tile * common.BytesPerTile
 		tileData := getTile(src[offset : offset+common.BytesPerTile])
-		writeTileToProto(encoded, tileData)
+		tileCopy := make([]byte, len(tileData))
+		copy(tileCopy, tileData)
+		result = append(result, tileCopy)
 	}
 
-	return encoded
+	return result
 }
 
-func ExtractMetatileData(src []byte, tileData *proto.Tiles, emptyTileID byte, emptyTileData []byte) *proto.Tileset {
+func ExtractMetatileData(src []byte, tileData [][]byte, emptyTileID byte, emptyTileData []byte) *proto.Tileset {
 	if len(src) < 4 || len(src)%4 != 0 {
 		return nil
 	}
 
 	result := &proto.Tileset{
-		TileData:  make(map[uint32][]byte, len(tileData.Tiles)+1),
+		TileData:  make(map[uint32][]byte, len(tileData)+1),
 		Metatiles: make([]*proto.Metatile, 0, len(src)/4),
 	}
 
-	for i := range tileData.Tiles {
-		result.TileData[uint32(i)] = tileData.Tiles[i]
+	for i := range tileData {
+		result.TileData[uint32(i)] = tileData[i]
 	}
 
 	if len(emptyTileData) == common.BitsPerTile {

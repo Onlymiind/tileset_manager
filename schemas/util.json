@@ -25,7 +25,7 @@
         "tile_ref": {
             "description": "Reference to tiles in the specific file\nSyntax: $ref:<path-to-file>[:(tile indexes to use) - optional]\nIndexes must be hexadecimal and can be supplied in one of the following forms:\n [index] - single index to use. If used for a range of tiles, scecified tile is repeated\n[index]-[index] - range of tiles\n[index]: - start of the range of tiles",
             "type": "string",
-            "pattern": "^[^:]+(.tile.json|.png|.tile|.chr)(:[0-9a-f]{1,2}(:([0-9a-f]{1,2})?)?)?$"
+            "pattern": "^[^:]+(.tile.json|.png|.tile|.chr)(:[0-9a-f]{1,2})?$"
         },
         "colorName": {
             "enum": ["black", "white", "light", "dark"]

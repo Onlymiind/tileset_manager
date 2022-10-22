@@ -36,21 +36,21 @@ func writeTileToImage(image *image.Paletted, palette outPalette, tile []byte, x,
 	}
 }
 
-func WriteTileData(tileData *proto.Tiles, palette [4]color.Color) *image.Paletted {
+func WriteTileData(tileData [][]byte, palette [4]color.Color) *image.Paletted {
 	width := common.OutTilesPerRow
-	if len(tileData.Tiles) < width {
-		width = len(tileData.Tiles)
+	if len(tileData) < width {
+		width = len(tileData)
 	}
 
-	height := len(tileData.Tiles) / width
-	if len(tileData.Tiles)%width != 0 {
+	height := len(tileData) / width
+	if len(tileData)%width != 0 {
 		height++
 	}
 
 	img := image.NewPaletted(image.Rect(0, 0, width*common.TileSizePx, height*common.TileSizePx),
 		[]color.Color(palette[:]))
 	x, y := 0, 0
-	for _, tile := range tileData.Tiles {
+	for _, tile := range tileData {
 		writeTileToImage(img, palette[:], tile, x, y)
 		x += common.TileSizePx
 		if x >= width*common.TileSizePx {

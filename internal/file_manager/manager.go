@@ -32,7 +32,7 @@ func (c TileCache) GetTile(file string, index uint8) ([]byte, error) {
 			return nil, common.Wrap(err, "cache", "could not get tile data")
 		}
 
-		c[file] = tiles.Tiles
+		c[file] = tiles
 		data = c[file]
 	}
 
@@ -77,19 +77,19 @@ func WritePNG(imgPath string, img *image.Paletted) error {
 	return imgFile.Close()
 }
 
-func ExtractTileData(filePath string) (*proto.Tiles, error) {
+func ExtractTileData(filePath string) ([][]byte, error) {
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
 
-	pb := extractor.ExtractTileData(data)
+	tileData := extractor.ExtractTileData(data)
 
-	return pb, nil
+	return tileData, nil
 }
 
-func ExtractMetatileData(filePath string, tileData *proto.Tiles, emptyTileID uint8, emptyTileData []byte) (*proto.Tileset, error) {
+func ExtractMetatileData(filePath string, tileData [][]byte, emptyTileID uint8, emptyTileData []byte) (*proto.Tileset, error) {
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
