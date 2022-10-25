@@ -19,7 +19,7 @@
                 "img_directory": {
                     "type": "string"
                 },
-                "json_direcory": {
+                "json_directory": {
                     "type": "string"
                 },
                 "tile_directory": {

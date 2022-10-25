@@ -30,7 +30,7 @@
 				"mode": "auto",
 				"program": "${workspaceFolder}/cmd/generator",
 				"args": [
-					"${workspaceFolder}/assets/config.json"
+					"${workspaceFolder}/assets/config.cfg.json"
 				],
 				"cwd": "${workspaceFolder}"
 			},

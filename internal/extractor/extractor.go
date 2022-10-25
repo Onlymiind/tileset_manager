@@ -36,10 +36,10 @@ func getTile(src []byte) []byte {
 	return result
 }
 
-func ExtractTileData(src []byte) [][]byte {
+func ExtractTileData(src []byte) common.Tiles {
 	tileCount := len(src) / common.BytesPerTile
 
-	result := make([][]byte, 0, len(src)/common.BytesPerTile)
+	result := make(common.Tiles, 0, len(src)/common.BytesPerTile)
 
 	for tile := 0; tile < tileCount; tile++ {
 		offset := tile * common.BytesPerTile
@@ -52,7 +52,7 @@ func ExtractTileData(src []byte) [][]byte {
 	return result
 }
 
-func ExtractMetatileData(src []byte, tileData [][]byte, emptyTileID byte, emptyTileData []byte) *proto.Tileset {
+func ExtractMetatileData(src []byte, tileData common.Tiles, emptyTileID byte, emptyTileData []byte) *proto.Tileset {
 	if len(src) < 4 || len(src)%4 != 0 {
 		return nil
 	}

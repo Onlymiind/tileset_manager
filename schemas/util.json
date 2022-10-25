@@ -31,7 +31,7 @@
             "enum": ["black", "white", "light", "dark"]
         },
         "colorBin": {
-            "enum": ["00", "11", "01", "10"]
+            "enum": ["00", "11", "10", "01"]
         }
     }
 }
