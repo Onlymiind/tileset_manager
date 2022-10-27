@@ -13,6 +13,7 @@ const (
 	ExtensionTileData     = ".chr"
 	ExtensionMetatileData = ".mtile"
 	ExtensionJSON         = ".json"
+	ExtensionPNG          = ".png"
 	OutTilesPerRow        = 16
 	TileSizePx            = 8
 	BitsPerTile           = TileSizePx * TileSizePx
@@ -46,7 +47,7 @@ type Output struct {
 	ImgDirectory  string
 	JSONDirectory string
 	TileDirectory string
-	OutputType    OutputType
+	Type          OutputType
 }
 
 func (o *Output) GetOutputPath(isTile bool, isJSON bool) string {
@@ -101,13 +102,24 @@ func (r *TileRef) Less(rhs *TileRef) bool {
 	return r.Range.Start < rhs.Range.Start && r.Range.End < rhs.Range.End
 }
 
+func (r *TileRef) InRange(index uint8) bool {
+	return index >= r.Range.Start && index <= r.Range.End
+}
+
 type Tiles [][]byte
 
 type Metatiles struct {
-	Palette     [4]color.Color
+	Palette     []color.Color
 	Refs        Tree[TileRef]
-	AbsentTiles Tree[TileRef]
+	AbsentTiles Tree[IndexRange]
 	Metatiles   []Metatile
+}
+
+func NewMetatiles() *Metatiles {
+	return &Metatiles{
+		Refs:        NewTree(func(lhs, rhs *TileRef) bool { return lhs.Less(rhs) }),
+		AbsentTiles: NewTree(func(lhs, rhs *IndexRange) bool { return lhs.Start < rhs.Start && lhs.End < rhs.End }),
+	}
 }
 
 func ReplaceLast(src string, old string, new string) string {

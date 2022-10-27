@@ -1,8 +1,9 @@
 package extractor
 
 import (
+	"sort"
+
 	"github.com/Onlymiind/tileset_manager/internal/common"
-	"github.com/Onlymiind/tileset_manager/proto"
 )
 
 // Convert two bytes of source data to an array of color indexes
@@ -52,31 +53,54 @@ func ExtractTileData(src []byte) common.Tiles {
 	return result
 }
 
-func ExtractMetatileData(src []byte, tileData common.Tiles, emptyTileID byte, emptyTileData []byte) *proto.Tileset {
+func ExtractMetatileData(src []byte, tileData common.Tree[common.TileRef]) *common.Metatiles {
 	if len(src) < 4 || len(src)%4 != 0 {
 		return nil
 	}
 
-	result := &proto.Tileset{
-		TileData:  make(map[uint32][]byte, len(tileData)+1),
-		Metatiles: make([]*proto.Metatile, 0, len(src)/4),
-	}
+	result := common.NewMetatiles()
 
-	for i := range tileData {
-		result.TileData[uint32(i)] = tileData[i]
-	}
+	result.Refs = tileData
 
-	if len(emptyTileData) == common.BitsPerTile {
-		result.TileData[uint32(emptyTileID)] = emptyTileData
-	}
-
+	absent := map[uint8]struct{}{}
 	for i := 0; i < len(src); i += 4 {
-		result.Metatiles = append(result.Metatiles, &proto.Metatile{
-			TopLeft:     uint32(src[i]),
-			TopRight:    uint32(src[i+1]),
-			BottomLeft:  uint32(src[i+2]),
-			BottomRight: uint32(src[i+3]),
+		tl, tr, bl, br := src[i], src[i+1], src[i+2], src[i+3]
+		arr := []uint8{tl, tr, bl, br}
+		for _, index := range arr {
+			ref := common.TileRef{Range: common.IndexRange{Start: index, End: index}}
+			it := tileData.Find(ref)
+			if it == nil {
+				absent[index] = struct{}{}
+			} else if result.Refs.Find(ref) == nil {
+				result.Refs.Insert(it.GetValue())
+			}
+		}
+
+		result.Metatiles = append(result.Metatiles, common.Metatile{
+			TopLeft:     tl,
+			TopRight:    tr,
+			BottomLeft:  bl,
+			BottomRight: br,
 		})
+	}
+
+	absentArr := make([]uint8, 0, len(absent))
+	for i := range absent {
+		absentArr = append(absentArr, i)
+	}
+	sort.Slice(absentArr, func(i, j int) bool { return absentArr[i] < absentArr[j] })
+
+	absentRngs := make([]common.IndexRange, 0, len(absentArr))
+	for i := range absentArr {
+		if i == 0 || absentRngs[len(absentRngs)-1].End != absentArr[i]-1 {
+			absentRngs = append(absentRngs, common.IndexRange{Start: absentArr[i], End: absentArr[i]})
+		} else {
+			absentRngs[len(absentRngs)-1].End = absentArr[i]
+		}
+	}
+
+	for _, rng := range absentRngs {
+		result.AbsentTiles.Insert(rng)
 	}
 
 	return result

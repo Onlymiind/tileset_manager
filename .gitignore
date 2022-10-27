@@ -1,6 +1,6 @@
 assets
 extracted
 bin
-out
+out*
 temp
 *.pb.go

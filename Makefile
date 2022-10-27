@@ -1,15 +1,6 @@
-all: proto _compiler _generator
+all: compiler generator
 
-compiler: proto _compiler
+compiler:
 
-generator: proto _generator
-
-proto:
-	protoc --proto_path=proto --go_out=proto --go_opt=paths=source_relative proto/*.proto
-
-_compiler:
-
-_generator:
+generator:
 	go build -o bin/tileset_manager cmd/generator/main.go
-
-.PHONY: proto

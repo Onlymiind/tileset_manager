@@ -6,14 +6,10 @@ import (
 	"image/png"
 	"io/fs"
 	"os"
-	"strings"
-
-	"google.golang.org/protobuf/encoding/protojson"
-	protobuf "google.golang.org/protobuf/proto"
+	"path"
 
 	"github.com/Onlymiind/tileset_manager/internal/common"
 	"github.com/Onlymiind/tileset_manager/internal/extractor"
-	"github.com/Onlymiind/tileset_manager/proto"
 )
 
 type TileCache map[string]common.Tiles
@@ -42,24 +38,11 @@ func (c TileCache) GetTile(file string, index uint8) ([]byte, error) {
 }
 
 func IsTileData(info fs.FileInfo) bool {
-	return strings.HasSuffix(info.Name(), common.ExtensionTileData) && info.Mode().IsRegular()
+	return path.Ext(info.Name()) == common.ExtensionTileData && info.Mode().IsRegular()
 }
 
 func IsMetatileData(info fs.FileInfo) bool {
-	return strings.HasSuffix(info.Name(), common.ExtensionMetatileData) && info.Mode().IsRegular()
-}
-
-func WritePB(pbPath string, msg protobuf.Message) error {
-	marshaller := protojson.MarshalOptions{
-		EmitUnpopulated: true,
-		Multiline:       true,
-		Indent:          "    ",
-	}
-	out, err := marshaller.Marshal(msg)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(pbPath, out, 0666)
+	return path.Ext(info.Name()) == common.ExtensionMetatileData && info.Mode().IsRegular()
 }
 
 func WritePNG(imgPath string, img *image.Paletted) error {
@@ -87,14 +70,14 @@ func ExtractTileData(filePath string) (common.Tiles, error) {
 	return tileData, nil
 }
 
-func ExtractMetatileData(filePath string, tileData common.Tiles, emptyTileID uint8, emptyTileData []byte) (*proto.Tileset, error) {
+func ExtractMetatileData(filePath string, tileData common.Tree[common.TileRef]) (*common.Metatiles, error) {
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
 
-	pb := extractor.ExtractMetatileData(data, tileData, emptyTileID, emptyTileData)
+	pb := extractor.ExtractMetatileData(data, tileData)
 
 	return pb, nil
 }
