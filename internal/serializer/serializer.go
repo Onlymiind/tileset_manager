@@ -1,32 +1,39 @@
 package serializer
 
 import (
-	"bytes"
 	"encoding/base64"
 	"fmt"
-	"image"
 	"image/color"
-	"image/png"
-	"os"
 
 	"github.com/Onlymiind/tileset_manager/internal/common"
 	"github.com/valyala/fastjson"
 )
 
-func SerializeTileData(data common.Tiles) *fastjson.Value {
-	arena := fastjson.Arena{}
-	result := arena.NewArray()
+func SerializeTileData(data *common.Tiles) *fastjson.Value {
+	arena := &fastjson.Arena{}
+	result := arena.NewObject()
+	result.Set(fileType, arena.NewString(typeTileData))
 
-	for i, tile := range data {
-		result.SetArrayItem(i, arena.NewString(base64.StdEncoding.EncodeToString(tile)))
+	arr := arena.NewArray()
+	for i, tile := range data.Data {
+		arr.SetArrayItem(i, arena.NewString(base64.StdEncoding.EncodeToString(tile)))
 	}
+	result.Set(tiles, arr)
+	plt := arena.NewArray()
+	for i, color := range data.Palette {
+		plt.SetArrayItem(i, serializeColor(data.Palette, arena, color))
+	}
+	result.Set(palette, plt)
+
+	_ = color.RGBA{}
 
 	return result
 }
 
-func SerializeMetatileData(data *common.Metatiles) *fastjson.Value {
+func SerializeMetatileData(plt []color.Color, data *common.Metatiles) *fastjson.Value {
 	arena := &fastjson.Arena{}
 	result := arena.NewObject()
+	result.Set(fileType, arena.NewString(typeMetatileData))
 
 	absTiles := arena.NewArray()
 	i := 0
@@ -51,35 +58,12 @@ func SerializeMetatileData(data *common.Metatiles) *fastjson.Value {
 	if len(data.Palette) != 0 {
 		paletteObj := arena.NewArray()
 		for i := range data.Palette {
-			paletteObj.SetArrayItem(i, serializeColor(arena, data.Palette[i]))
+			paletteObj.SetArrayItem(i, serializeColor(plt, arena, data.Palette[i]))
 		}
 		result.Set(palette, paletteObj)
 	}
 
 	return result
-}
-
-func WritePng(path string, img *image.Paletted) error {
-	buf := &bytes.Buffer{}
-	err := png.Encode(buf, img)
-	if err != nil {
-		return common.Wrap(err, "failed to encode image", path)
-	}
-	err = os.WriteFile(path, buf.Bytes(), 0666)
-	if err != nil {
-		return common.Wrap(err, "failed to write to file", path)
-	}
-
-	return nil
-}
-
-func WriteJson(path string, json *fastjson.Value) error {
-	err := os.WriteFile(path, json.MarshalTo(nil), 0666)
-	if err != nil {
-		return common.Wrap(err, "failed to write to file", path)
-	}
-
-	return nil
 }
 
 func serializeMetatile(arena *fastjson.Arena, mtile common.Metatile) *fastjson.Value {
@@ -112,25 +96,9 @@ func serializeTileRef(arena *fastjson.Arena, ref common.TileRef) (key string, re
 	return key, refStr
 }
 
-func serializeColor(arena *fastjson.Arena, c color.Color) *fastjson.Value {
-	model := color.Palette(common.DefaultPalette[:])
-	c16, ok := model.Convert(c).(color.Gray16)
-	if !ok {
-		return nil
-	}
+func serializeColor(palette []color.Color, arena *fastjson.Arena, c color.Color) *fastjson.Value {
+	model := color.Palette(palette)
+	r, g, b, _ := model.Convert(c).RGBA()
 
-	colorStr := "black"
-	switch c16.Y {
-	case common.ColorBlack:
-		colorStr = "black"
-	case common.ColorWhite:
-		colorStr = "white"
-	case common.ColorLightGray:
-		colorStr = "light"
-	case common.ColorDarkGray:
-		colorStr = "dark"
-	}
-
-	return arena.NewString(colorStr)
-
+	return arena.NewString(fmt.Sprintf("%02x%02x%02x", uint8(r), uint8(g), uint8(b)))
 }

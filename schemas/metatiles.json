@@ -3,23 +3,12 @@
     "description": "",
     "type": "object",
     "properties": {
+        "type": {
+            "$ref": "util.json#/definitions/file_type"
+        },
         "palette":{
             "description": "Palette to use when converting to png image\nColors can be specified either by name or by their index in binary form",
-            "type":"array",
-            "oneOf": [
-                {
-                    "items": {
-                        "$ref": "util.json#/definitions/colorName"
-                    }
-                },
-                {
-                    "items": {
-                        "$ref": "util.json#/definitions/colorBin"
-                    }
-                }
-            ],
-            "minItems": 4,
-            "maxItems": 4
+            "$ref": "util.json#/definitions/palette"
         },
         "tiles": {
             "description": "Tiles to use",
@@ -66,5 +55,5 @@
             }
         }
     },
-    "required": ["metatiles"]
+    "required": ["metatiles", "type"]
 }

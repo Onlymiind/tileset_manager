@@ -27,11 +27,20 @@
             "type": "string",
             "pattern": "^[^:]+(.tile.json|.png|.tile|.chr)(:[0-9a-f]{1,2})?$"
         },
-        "colorName": {
-            "enum": ["black", "white", "light", "dark"]
+        "extension": {
+            "type": "string",
+            "pattern": "^\\..+$"
         },
-        "colorBin": {
-            "enum": ["00", "11", "10", "01"]
+        "palette": {
+            "type":"array",
+            "items": {
+                "pattern": "^[0-9a-fA-F]{6}$"
+            },
+            "minItems": 4,
+            "maxItems": 4
+        },
+        "file_type": {
+            "enum": ["mtiles", "tiles"]
         }
     }
 }

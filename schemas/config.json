@@ -5,6 +5,10 @@
         "auto": {
             "type": "string"
         },
+        "cache_size": {
+            "description": "cache size in kilobytes",
+            "type": "integer"
+        },
         "output": {
             "type": "object",
             "properties": {
@@ -37,6 +41,9 @@
             "propertyNames": {
                 "$ref": "util.json#/definitions/explicit_uint8"
             }
+        },
+        "palette": {
+            "$ref": "util.json#/definitions/palette"
         },
         "manual": {
             "type": "array",

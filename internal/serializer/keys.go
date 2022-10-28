@@ -18,9 +18,15 @@ const (
 	tiles        = "tiles"
 	mtiles       = "metatiles"
 	absentTiles  = "absent_tiles"
+	cacheSize    = "cache_size"
 
 	topLeft     = "tl"
 	topRight    = "tr"
 	bottomLeft  = "bl"
 	bottomRight = "br"
+
+	fileType = "type"
+
+	typeTileData     = "tiles"
+	typeMetatileData = "mtiles"
 )

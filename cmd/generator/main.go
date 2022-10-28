@@ -11,14 +11,13 @@ import (
 
 	"github.com/Onlymiind/tileset_manager/internal/common"
 	"github.com/Onlymiind/tileset_manager/internal/file_manager"
-	"github.com/Onlymiind/tileset_manager/internal/image_writer"
 	"github.com/Onlymiind/tileset_manager/internal/serializer"
 )
 
 func main() {
-	// if len(os.Args) < 2 {
-	// 	log.Fatalln("expected path to a config file as an argument")
-	// }
+	if len(os.Args) < 2 {
+		log.Fatalln("expected path to a config file as an argument")
+	}
 
 	defer func() {
 		err := recover()
@@ -29,7 +28,7 @@ func main() {
 		}
 	}()
 
-	cfg, err := serializer.ParseConfig("assets/config.cfg.json")
+	cfg, err := serializer.ParseConfig(os.Args[1])
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -51,9 +50,9 @@ func main() {
 		}
 	}
 
-	cache := file_manager.NewTileCache()
+	manager := file_manager.NewManager(cfg)
 	fileWalkerWrapper := func(filePath string, info fs.FileInfo, err error) error {
-		return fileWalker(cfg, &cache, filePath, info, err)
+		return fileWalker(cfg, manager, filePath, info, err)
 	}
 
 	if len(cfg.Auto) != 0 {
@@ -63,9 +62,15 @@ func main() {
 		}
 	}
 
-	processManual(cfg, &cache)
+	fmt.Printf("%f %s\n", manager.CacheSize().As(common.Kilobytes), "kb")
 
-	processConvertToPNG(cfg, &cache)
+	processManual(cfg, manager)
+
+	fmt.Printf("%f %s\n", manager.CacheSize().As(common.Kilobytes), "kb")
+
+	processConvertToPNG(cfg, manager)
+
+	fmt.Printf("%f %s\n", manager.CacheSize().As(common.Kilobytes), "kb")
 
 	// f, _ := os.OpenFile("out/png/queen.png", os.O_RDONLY, 0666)
 	// img, _ := png.Decode(f)
@@ -75,23 +80,22 @@ func main() {
 	// fmt.Println()
 }
 
-func process(cfg *common.Config, cache *file_manager.TileCache, tilePath, metatilePath, name string, writeTileData bool) error {
+func process(cfg *common.Config, manager *file_manager.Manager, tilePath, metatilePath, name string, writeTileData bool) error {
 	tileData, err := file_manager.ExtractTileData(tilePath)
 	if err != nil {
 		return common.Wrap(err, "failed to extract tile data", tilePath)
 	}
-
-	jsonPath := path.Join(cfg.Output.GetOutputPath(true, true), name+common.ExtensionJSON)
+	tileData.Palette = cfg.Palette
 
 	if writeTileData {
 		json := serializer.SerializeTileData(tileData)
-		err = serializer.WriteJson(jsonPath, json)
+		err = manager.WriteJSON(json, name+".tile", true)
 		if err != nil {
 			return common.Wrap(err, "failed to write json", tilePath)
 		}
 
-		png := image_writer.WriteTileData(tileData, common.DefaultPalette)
-		err = serializer.WritePng(path.Join(cfg.Output.GetOutputPath(true, false), name+common.ExtensionPNG), png)
+		png := file_manager.TileDataToImage(tileData)
+		err = manager.WritePNG(png, name, true)
 		if err != nil {
 			return common.Wrap(err, "failed to write png", tilePath)
 		}
@@ -102,7 +106,7 @@ func process(cfg *common.Config, cache *file_manager.TileCache, tilePath, metati
 			File: tilePath,
 			Range: common.IndexRange{
 				Start: 0,
-				End:   uint8(len(tileData)),
+				End:   uint8(len(tileData.Data)),
 			},
 		})
 		if len(cfg.EmptyTile.File) != 0 {
@@ -113,31 +117,30 @@ func process(cfg *common.Config, cache *file_manager.TileCache, tilePath, metati
 		if err != nil {
 			return common.Wrap(err, "failed to extract metatile data")
 		}
-
-		json := serializer.SerializeMetatileData(mtiles)
-		err = serializer.WriteJson(path.Join(cfg.Output.GetOutputPath(false, true), name+common.ExtensionJSON), json)
-		if err != nil {
-			return common.Wrap(err, "failed to write json", metatilePath)
-		}
-
 		if len(mtiles.Palette) == 0 {
-			mtiles.Palette = common.DefaultPalette[:]
+			mtiles.Palette = cfg.Palette
 		}
 
-		png := image_writer.WriteMetatileData(cache, mtiles)
-		err = serializer.WritePng(path.Join(cfg.Output.GetOutputPath(false, false), name+common.ExtensionPNG), png)
+		json := serializer.SerializeMetatileData(cfg.Palette, mtiles)
+		err = manager.WriteJSON(json, name+".mtile", false)
 		if err != nil {
-			return common.Wrap(err, "failed to write png", metatilePath)
+			return common.Wrap(err, "failed to write json", tilePath)
+		}
+
+		png := manager.MetatileToImage(mtiles)
+		err = manager.WritePNG(png, name, false)
+		if err != nil {
+			return common.Wrap(err, "failed to write png", tilePath)
 		}
 	}
 
 	return nil
 }
 
-func processManual(cfg *common.Config, cache *file_manager.TileCache) {
+func processManual(cfg *common.Config, manager *file_manager.Manager) {
 	for i := range cfg.Manual {
 		info, err := os.Stat(cfg.Manual[i].TileData)
-		if err != nil || !file_manager.IsTileData(info) {
+		if err != nil {
 			fmt.Printf("could not get tile data file info, path: %s, error: %s\n", cfg.Manual[i].TileData, err.Error())
 			continue
 		}
@@ -163,28 +166,35 @@ func processManual(cfg *common.Config, cache *file_manager.TileCache) {
 			name = cfg.Manual[i].Name
 		}
 
-		err = process(cfg, cache, cfg.Manual[i].TileData, metatilePath, name, true)
+		err = process(cfg, manager, cfg.Manual[i].TileData, metatilePath, name, false)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
 	}
 }
 
-func processConvertToPNG(cfg *common.Config, cache *file_manager.TileCache) {
+func processConvertToPNG(cfg *common.Config, manager *file_manager.Manager) {
 	for i := range cfg.ConvertToPng {
 		info, err := os.Stat(cfg.ConvertToPng[i])
 		if err != nil {
 			fmt.Printf("failed to get file info %s, error: %s\n", cfg.ConvertToPng[i], err.Error())
 		}
-		name := strings.TrimSuffix(info.Name(), path.Ext(info.Name())) + common.ExtensionPNG
+		name := info.Name()
+		for ext := path.Ext(name); len(ext) != 0; ext = path.Ext(name) {
+			name = strings.TrimSuffix(name, ext)
+		}
 		if strings.HasSuffix(cfg.ConvertToPng[i], ".tile.json") {
 			tileData, err := serializer.ParseTileData(cfg.ConvertToPng[i])
 			if err != nil {
 				fmt.Println(err.Error(), cfg.ConvertToPng[i])
 			}
 
-			img := image_writer.WriteTileData(tileData, common.DefaultPalette)
-			err = serializer.WritePng(path.Join(cfg.Output.GetOutputPath(true, false), name), img)
+			if len(tileData.Palette) == 0 {
+				tileData.Palette = cfg.Palette
+			}
+
+			img := file_manager.TileDataToImage(tileData)
+			err = manager.WritePNG(img, name, true)
 			if err != nil {
 				fmt.Println(err.Error(), cfg.ConvertToPng[i])
 			}
@@ -196,11 +206,11 @@ func processConvertToPNG(cfg *common.Config, cache *file_manager.TileCache) {
 			}
 
 			if len(tileset.Palette) == 0 {
-				tileset.Palette = common.DefaultPalette[:]
+				tileset.Palette = cfg.Palette
 			}
 
-			img := image_writer.WriteMetatileData(cache, tileset)
-			err = serializer.WritePng(path.Join(cfg.Output.GetOutputPath(false, false), name), img)
+			img := manager.MetatileToImage(tileset)
+			err = manager.WritePNG(img, name, false)
 			if err != nil {
 				fmt.Println(err.Error(), cfg.ConvertToPng[i])
 			}
@@ -208,7 +218,7 @@ func processConvertToPNG(cfg *common.Config, cache *file_manager.TileCache) {
 	}
 }
 
-func fileWalker(cfg *common.Config, cache *file_manager.TileCache, filePath string, info fs.FileInfo, err error) error {
+func fileWalker(cfg *common.Config, manager *file_manager.Manager, filePath string, info fs.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
@@ -221,7 +231,7 @@ func fileWalker(cfg *common.Config, cache *file_manager.TileCache, filePath stri
 		if err != nil || !file_manager.IsMetatileData(mInfo) {
 			metatilePath = ""
 		}
-		return process(cfg, cache, filePath, metatilePath, name, true)
+		return process(cfg, manager, filePath, metatilePath, name, true)
 	}
 
 	return nil

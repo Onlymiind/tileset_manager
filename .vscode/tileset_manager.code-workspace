@@ -14,6 +14,12 @@
 			},
 			{
 				"fileMatch": [
+					"*.tile.json"
+				],
+				"url": "./schemas/tiles.json"
+			},
+			{
+				"fileMatch": [
 					"*.cfg.json"
 				],
 				"url": "./schemas/config.json"
@@ -30,7 +36,7 @@
 				"mode": "auto",
 				"program": "${workspaceFolder}/cmd/generator",
 				"args": [
-					"${workspaceFolder}/assets/config.cfg.json"
+					"${workspaceFolder}/assets/cfg/config.cfg.json"
 				],
 				"cwd": "${workspaceFolder}"
 			},

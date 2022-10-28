@@ -2,6 +2,7 @@ package common
 
 import (
 	"image/color"
+	"math"
 	"path"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 
 const (
 	DefaultOutDir         = "extracted"
+	DeafultCacheSizeKB    = 30
 	ExtensionTileData     = ".chr"
 	ExtensionMetatileData = ".mtile"
 	ExtensionJSON         = ".json"
@@ -19,21 +21,12 @@ const (
 	BitsPerTile           = TileSizePx * TileSizePx
 	BytesPerTile          = TileSizePx * 2
 	MetatileSizePx        = TileSizePx * 2
-	AirTileID             = 0xFF
 
 	ColorBlack     uint16 = 0
 	ColorWhite     uint16 = 0xffff
 	ColorDarkGray  uint16 = ColorWhite / 4
 	ColorLightGray uint16 = ColorDarkGray * 2
 )
-
-var AirTileData [BitsPerTile]byte = [BitsPerTile]byte{}
-var DefaultPalette [4]color.Color = [4]color.Color{
-	color.Gray16{ColorBlack},
-	color.Gray16{ColorWhite},
-	color.Gray16{ColorLightGray}, //Light gray
-	color.Gray16{ColorDarkGray},  //Dark gray
-}
 
 type OutputType uint8
 
@@ -73,6 +66,8 @@ type Config struct {
 	Manual       []Manual
 	ConvertToPng []string
 	EmptyTile    TileRef
+	Palette      []color.Color
+	CacheSize    MemorySize
 }
 
 type Manual struct {
@@ -106,7 +101,11 @@ func (r *TileRef) InRange(index uint8) bool {
 	return index >= r.Range.Start && index <= r.Range.End
 }
 
-type Tiles [][]byte
+type Tiles struct {
+	Data    [][]byte
+	Palette []color.Color
+	Size    MemorySize
+}
 
 type Metatiles struct {
 	Palette     []color.Color
@@ -120,6 +119,30 @@ func NewMetatiles() *Metatiles {
 		Refs:        NewTree(func(lhs, rhs *TileRef) bool { return lhs.Less(rhs) }),
 		AbsentTiles: NewTree(func(lhs, rhs *IndexRange) bool { return lhs.Start < rhs.Start && lhs.End < rhs.End }),
 	}
+}
+
+type MemoryUnit uint8
+
+const (
+	Bytes MemoryUnit = iota * 10
+	Kilobytes
+	Magebytes
+	Gigabytes
+	Terabytes
+)
+
+type MemorySize uint64
+
+func MemorySizeFrom(value float64, unit MemoryUnit) MemorySize {
+	return MemorySize(math.Round(value * float64(uint64(1)<<unit)))
+}
+
+func (s MemorySize) As(unit MemoryUnit) float64 {
+	return float64(s) / float64(uint64(1)<<unit)
+}
+
+func (s MemorySize) Bytes() uint64 {
+	return uint64(s)
 }
 
 func ReplaceLast(src string, old string, new string) string {

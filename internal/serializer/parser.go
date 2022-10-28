@@ -13,7 +13,7 @@ import (
 	"github.com/valyala/fastjson"
 )
 
-func ParseTileData(path string) (common.Tiles, error) {
+func ParseTileData(path string) (*common.Tiles, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, common.Wrap(err, "could not read file", path)
@@ -23,13 +23,25 @@ func ParseTileData(path string) (common.Tiles, error) {
 	if err != nil {
 		return nil, common.Wrap(err, "could not parse json", path)
 	}
-	arr := json.GetArray()
-	result := make(common.Tiles, 0, len(arr))
+	if ftype := string(json.GetStringBytes(fileType)); len(ftype) == 0 || ftype != typeTileData {
+		return nil, fmt.Errorf("wrong file type: expected type=%s, got %s", typeTileData, ftype)
+	}
+
+	arr := json.GetArray(tiles)
+	result := &common.Tiles{
+		Data: make([][]byte, 0, len(arr)),
+	}
 	for i := range arr {
 		decoded, err := base64.StdEncoding.DecodeString(string(arr[i].GetStringBytes()))
 		if err == nil {
-			result = append(result, decoded)
+			result.Data = append(result.Data, decoded)
+			result.Size += common.MemorySizeFrom(float64(len(decoded)), common.Bytes)
 		}
+	}
+	palette := json.GetArray(palette)
+	result.Palette = make([]color.Color, 0, len(palette))
+	for i := range palette {
+		result.Palette = append(result.Palette, parseColor(string(palette[i].GetStringBytes())))
 	}
 
 	return result, nil
@@ -65,6 +77,19 @@ func ParseConfig(cfgPath string) (*common.Config, error) {
 		}
 	})
 
+	cacheSize := cfgJSON.GetInt(cacheSize)
+	if cacheSize <= 0 {
+		cacheSize = common.DeafultCacheSizeKB
+	}
+
+	cfg.CacheSize = common.MemorySizeFrom(float64(cacheSize), common.Kilobytes)
+
+	palette := cfgJSON.GetArray(palette)
+	cfg.Palette = make([]color.Color, 0, len(palette))
+	for i := range palette {
+		cfg.Palette = append(cfg.Palette, parseColor(string(palette[i].GetStringBytes())))
+	}
+
 	convert := cfgJSON.GetArray(convertToPng)
 	cfg.ConvertToPng = make([]string, 0, len(convert))
 	for i := range convert {
@@ -96,14 +121,14 @@ func ParseMetatileData(path string) (*common.Metatiles, error) {
 	if err != nil {
 		return nil, common.Wrap(err, "could not parse metatile data", path)
 	}
-
-	palette := parsed.GetArray(palette)
-	if palette != nil && len(palette) != 4 {
-		return nil, fmt.Errorf("wrong palette length: %d, expected 4: %s", len(palette), path)
+	if ftype := string(parsed.GetStringBytes(fileType)); len(ftype) == 0 || ftype != typeMetatileData {
+		return nil, fmt.Errorf("wrong file type: expected type=%s, got %s", typeMetatileData, ftype)
 	}
 
+	palette := parsed.GetArray(palette)
+	result.Palette = make([]color.Color, 0, len(palette))
 	for i := range palette {
-		result.Palette[i] = parseColor(string(palette[i].GetStringBytes()))
+		result.Palette = append(result.Palette, parseColor(string(palette[i].GetStringBytes())))
 	}
 
 	parsed.GetObject(tiles).Visit(func(ids []byte, refStr *fastjson.Value) {
@@ -163,17 +188,20 @@ func getOutputType(t string) common.OutputType {
 }
 
 func parseColor(str string) color.Color {
-	switch str {
-	case "black", "00":
-		return color.Gray16{common.ColorBlack}
-	case "white", "11":
-		return color.Gray16{common.ColorWhite}
-	case "light", "10":
-		return color.Gray16{common.ColorLightGray}
-	case "dark", "01":
-		return color.Gray16{common.ColorDarkGray}
-	default:
-		return color.Gray16{common.ColorBlack}
+	if len(str) != 6 {
+		return color.Black
+	}
+
+	val, err := strconv.ParseUint(str, 16, 24)
+	if err != nil {
+		return color.Black
+	}
+
+	return color.RGBA{
+		R: uint8(val >> 16),
+		G: uint8((val >> 8) & 0xff),
+		B: uint8(val & 0xff),
+		A: 0xff,
 	}
 }
 

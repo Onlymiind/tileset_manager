@@ -37,17 +37,19 @@ func getTile(src []byte) []byte {
 	return result
 }
 
-func ExtractTileData(src []byte) common.Tiles {
+func ExtractTileData(src []byte) *common.Tiles {
 	tileCount := len(src) / common.BytesPerTile
 
-	result := make(common.Tiles, 0, len(src)/common.BytesPerTile)
-
+	result := &common.Tiles{
+		Data: make([][]byte, 0, tileCount),
+		Size: common.MemorySizeFrom(float64(tileCount)*common.BitsPerTile, common.Bytes),
+	}
 	for tile := 0; tile < tileCount; tile++ {
 		offset := tile * common.BytesPerTile
 		tileData := getTile(src[offset : offset+common.BytesPerTile])
 		tileCopy := make([]byte, len(tileData))
 		copy(tileCopy, tileData)
-		result = append(result, tileCopy)
+		result.Data = append(result.Data, tileCopy)
 	}
 
 	return result
