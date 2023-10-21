@@ -73,8 +73,6 @@ func ExtractMetatileData(src []byte, tileData common.Tree[common.TileRef]) *comm
 			it := tileData.Find(ref)
 			if it == nil {
 				absent[index] = struct{}{}
-			} else if result.Refs.Find(ref) == nil {
-				result.Refs.Insert(it.GetValue())
 			}
 		}
 
